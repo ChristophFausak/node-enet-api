@@ -11,7 +11,7 @@
     "eNet"
   ],
   "engines": {
-    "node": ">=0.12.0",
+    "node": ">=0.12.0"
   },
   "author": {
     "name": "Christoph Fausak"
