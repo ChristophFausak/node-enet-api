@@ -1,0 +1,22 @@
+{
+  "name": "node-eNet-api",
+  "version": "0.0.1",
+  "description": "Node.js Api to interact with Gira/Jung eNet devices."
+  "license": "MIT",
+  "directories": {
+    "samples": "sample scripts"
+  },
+  "keywords": [
+    "node"
+  ],
+  "engines": {
+    "node": ">=0.12.0",
+  },
+  "author": {
+    "name": "Christoph Fausak"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/ChristophFausak/node-eNet-api.git"
+  },
+}
