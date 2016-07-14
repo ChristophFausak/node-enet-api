@@ -1,17 +1,17 @@
-# node-eNet-api
+# node-enet-api
 
-Node.js Api to interact with Gira/Jung eNet devices.
+Node.js api to interact with Gira/Jung eNet devices.
 
-# Installation
+## Installation
 
-Install this plugin using: `npm install node-eNet-api`
+Install this plugin using: `npm install node-enet-api`
 
 
-# Examples
+## Examples
 
 See the samples directory.
 
 
-# License
+## License
 
 Published under the MIT License.
