@@ -1,6 +1,8 @@
 "use strict";
 
 const dgram = require('dgram');
+const util = require('util');
+const EventEmitter = require('events');
 
 const DISCOVERY_BROADCAST_LISTEN_PORT = 2906;
 const DISCOVERY_BROADCAST_PORT = 3112;
@@ -13,9 +15,13 @@ function byteToHex(byte) {
     return (byte >>> 4).toString(16) + (byte & 0xF).toString(16);
 }
 
-module.exports = function(callback, log) {
-    log = log ? log.error : console.log;
+function discover() {}
 
+util.inherits(discover, EventEmitter);
+
+module.exports = discover;
+
+discover.prototype.discover = function(callback) {
     var broadcast = dgram.createSocket('udp4');
     var gateways = [];
 
@@ -25,7 +31,7 @@ module.exports = function(callback, log) {
         callback(err);
     });
 
-    broadcast.on('message', (msg, rinfo) => {
+    broadcast.on('message', function(msg, rinfo) {
         var n = msg.length;
 
         if (n < 15) {
@@ -61,14 +67,17 @@ module.exports = function(callback, log) {
             }
 
             if (msg.length < gw.messageLength) {
-                log("Recieved incolmplete discovery reaponse.");
+                console.log("Recieved incolmplete discovery reaponse.");
             }
             else if (gw.magic65199 != 65199) {
-                log("Recieved corrupt/unknown discovery reaponse.");
+                console.log("Recieved corrupt/unknown discovery reaponse.");
             }
-            else gateways.push(gw);
+            else {
+                this.emit('discover', gw);
+                gateways.push(gw);
+            }
         }
-    });
+    }.bind(this));
 
     var message = new Buffer(DISCOVERY_PAYLOAD_MSG);
 
