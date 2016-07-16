@@ -13,7 +13,8 @@ function byteToHex(byte) {
     return (byte >>> 4).toString(16) + (byte & 0xF).toString(16);
 }
 
-module.exports = function(callback) {
+module.exports = function(callback, log) {
+    log = log ? log.error : console.log;
 
     var broadcast = dgram.createSocket('udp4');
     var gateways = [];
@@ -43,23 +44,29 @@ module.exports = function(callback) {
         // 1 byte Manufacturer
         // 1 byte unknown
 
-        macaddress = byteToHex(msg.readUInt8(msg.length-9)) + ':' + byteToHex(msg.readUInt8(msg.length-8)) + ':' + byteToHex(msg.readUInt8(msg.length-7)) + ':' +
-            byteToHex(msg.readUInt8(msg.length-6)) + ':' + byteToHex(msg.readUInt8(msg.length-5)) + ':' + byteToHex(msg.readUInt8(msg.length-4));
+        var macaddress = byteToHex(msg.readUInt8(msg.length-8)) + ':' + byteToHex(msg.readUInt8(msg.length-7)) + ':' + byteToHex(msg.readUInt8(msg.length-6)) + ':' +
+            byteToHex(msg.readUInt8(msg.length-5)) + ':' + byteToHex(msg.readUInt8(msg.length-4)) + ':' + byteToHex(msg.readUInt8(msg.length-3));
 
         if (!gateways.find(function (gw) {
             return gw.mac === macaddress; }))
         {
             var gw = {
-                firstByte: msg.readUInt8(0), // Don't know meaning of this
-                magic: msg.readUInt16LE(1),  // must be 65199
+                messageLength: msg.readUInt8(0),  // must be msg.length
+                magic65199: msg.readUInt16LE(1),  // must be 65199
                 host: msg.readUInt8(3).toString() + '.' + msg.readUInt8(4).toString() + '.' + msg.readUInt8(5).toString() + '.' + msg.readUInt8(6).toString(),
-                name: msg.slice(6, -9).toString(),
+                name: msg.slice(7, -9).toString(),
                 mac: macaddress,
-                manufacturer: msg.readUInt8(msg.length-2),
-                lastByte: msg.readUInt8(msg.length-1) // Don't know meaning of this
+                deviceState: msg.readUInt8(msg.length-2),
+                manufacturer: msg.readUInt8(msg.length-1)
             }
 
-            gateways.push(gw);
+            if (msg.length < gw.messageLength) {
+                log("Recieved incolmplete discovery reaponse.");
+            }
+            else if (gw.magic65199 != 65199) {
+                log("Recieved corrupt/unknown discovery reaponse.");
+            }
+            else gateways.push(gw);
         }
     });
 

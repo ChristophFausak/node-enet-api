@@ -21,38 +21,41 @@ function gateway(config) {
         this.connected = false;
         this.emit('gateway', null, null);
 //        console.log('gateway close');
-    });
+    }.bind(this));
 
-    this.client.on('error', (err) => {
+    this.client.on('error', function (err) {
         this.connected = false;
         this.emit('gateway', err, null);
 //        console.log('gateway error');
-    })
+    }.bind(this));
 
     this.client.on('data', function(data) {
         this.data += data;
-
-        var arr = data.split("\r\n");
+        var arr = this.data.split("\r\n\r\n");
 
         this.data = arr[arr.length-1];
 
-        for (i = 0; i < arr.length-1; ++i) {
+        for (var i = 0; i < arr.length-1; ++i) {
             try{
-                json=JSON.parse(response);
+                var json=JSON.parse(arr[i]);
 
                 // Check for channel messages
                 // {"PROTOCOL":"0.03","TIMESTAMP":"08154711","CMD":"ITEM_UPDATE_IND","VALUES":[{"NUMBER":"16","VALUE":"1","STATE":"ON","SETPOINT":"255"}]}
                 if (json && (json.CMD == "ITEM_UPDATE_IND") && Array.isArray(json.VALUES)) {
-                    msg.VALUES.forEach(function(obj) {
-                        if (obj.NUMBER) this.emit(obj.NUMBER.toString, null, obj);
-                    });
+                    json.VALUES.forEach(function(obj) {
+                        if (obj.NUMBER){
+                            this.emit(obj.NUMBER.toString(), null, obj);
+                        }
+                    }.bind(this));
                 }
-                else this.emit('gateway', null, json);
+                else {
+                    this.emit('gateway', null, json);
+                }
             }catch(e){
                 this.emit('gateway', e, null);
             }
         }
-    });
+    }.bind(this));
 }
 
 util.inherits(gateway, EventEmitter);
@@ -104,7 +107,7 @@ gateway.prototype.getBlockList = function(callback){
 
     if (!this.connected) this.connect();
 
-    var msg = `{"CMD":"BLOCK_LIST_REQ","PROTOCOL":"0.03","TIMESTAMP":"${Math.floor(Date.now()/1000)}"}\r\n\r\n`;
+    var msg = `{"CMD":"BLOCK_LIST_REQ","PROTOCOL":"0.03","TIMESTAMP":"${Math.floor(Date.now()/1000)}","LIST-RANGE":1}\r\n\r\n`;
     this.client.write(msg);
 
 // response: {"PROTOCOL":"0.03","TIMESTAMP":"08154711","CMD":"BLOCK_LIST_RES","STATE":0,"LIST-RANGE":1,"LIST-SIZE":[36,227,76,35,51,313,97,13,0,0],"DATA-IDS":[1,6,1,1,1,10,1,1,0,0]}
@@ -245,7 +248,8 @@ gateway.prototype.signIn = function(channels, callback){
 gateway.prototype.setValue = function(channel, on, long, callback){
     var l;
 
-    if (callback) l = new channelResponseListener(this, channel, "ITEM_VALUE_RES", callback);
+//    if (callback) l = new channelResponseListener(this, channel, "ITEM_VALUE_RES", callback);
+    if (callback) l = new channelResponseListener(this, 17, "ITEM_VALUE_RES", callback);
 
     if (!this.connected) this.connect();
 
@@ -267,11 +271,13 @@ function responseListener(gateway, response, callback) {
             if (!msg) {
                 gateway.removeListener('gateway', cb);
                 callback(new Error("Gateway disconnected."));
+                return;
             }
+//console.log("response: " + JSON.stringify(msg));
 
             if (msg.CMD === response){
                 gateway.removeListener('gateway', cb);
-                callback(null, obj);
+                callback(null, msg);
             }
         }
     };
@@ -290,11 +296,11 @@ function channelResponseListener(gateway, channel, response, callback) {
             if (!msg) {
                 gateway.removeListener('gateway', cb);
                 callback(new Error("Gateway disconnected."));
+                return;
             }
-
             if ((msg.CMD === response) && Array.isArray(msg.VALUES)) {
                 msg.VALUES.forEach(function(obj) {
-                    if (obj.NUMBER === channel){
+                    if (obj.NUMBER === channel.toString()){
                         gateway.removeListener('gateway', cb);
                         callback(null, obj);
                     }

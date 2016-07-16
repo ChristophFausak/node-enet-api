@@ -36,24 +36,6 @@ console.log("Requesting Project List")
 gw.getProjectList(function(err, res) {
     if (err) console.log("error: " + err);
     else console.log("command succeeded: \n" + JSON.stringify(res));
-})
 
-console.log("Sending sign out request for all channels.");
-gw.signOut([], function(err, res) {
-    if (err) console.log("error: " + err);
-    else console.log("command succeeded: \n" + JSON.stringify(res));
-})
-
-console.log("Sending sign in request for channel 16.");
-
-gw.signIn([16], function(err, res) {
-    if (err) console.log("error: " + err);
-    else console.log("command succeeded: \n" + JSON.stringify(res));
-})
-
-console.log("Sending on/up long-click command to channel 16.");
-
-gw.setValue(16, true, true, function(err, res) {
-    if (err) console.log("error: " + err);
-    else console.log("command succeeded: \n" + JSON.stringify(res));
+    gw.disconnect();
 })
