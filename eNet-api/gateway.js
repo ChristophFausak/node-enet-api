@@ -249,11 +249,14 @@ gateway.prototype.setValue = function(channel, on, long, callback){
     var l;
 
 //    if (callback) l = new channelResponseListener(this, channel, "ITEM_VALUE_RES", callback);
-    if (callback) l = new channelResponseListener(this, 17, "ITEM_VALUE_RES", callback);
+    if (callback) l = new channelResponseListener(this, channel, "ITEM_VALUE_RES", callback);
 
     if (!this.connected) this.connect();
 
+//    var msg = `{"CMD":"ITEM_VALUE_SET","PROTOCOL":"0.03","TIMESTAMP":"${Math.floor(Date.now()/1000)}","VALUES":[{"STATE":"${on ? "ON":"OFF"}"${long ? ",\"LONG_CLICK\":\"ON\"" : ""},"NUMBER":${channel}}]}\r\n\r\n`;
     var msg = `{"CMD":"ITEM_VALUE_SET","PROTOCOL":"0.03","TIMESTAMP":"${Math.floor(Date.now()/1000)}","VALUES":[{"STATE":"${on ? "ON":"OFF"}","LONG_CLICK":"${long ? "ON":"OFF"}","NUMBER":${channel}}]}\r\n\r\n`;
+
+console.log(msg);
     this.client.write(msg);
 
 // response: {"CMD":"ITEM_VALUE_RES","PROTOCOL":"0.03","TIMESTAMP":"1467998383","VALUES":[{"NUMBER":16,"STATE":"OFF"}]}
@@ -298,6 +301,7 @@ function channelResponseListener(gateway, channel, response, callback) {
                 callback(new Error("Gateway disconnected."));
                 return;
             }
+
             if ((msg.CMD === response) && Array.isArray(msg.VALUES)) {
                 msg.VALUES.forEach(function(obj) {
                     if (obj.NUMBER === channel.toString()){

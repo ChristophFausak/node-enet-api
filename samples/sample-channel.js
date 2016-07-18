@@ -4,7 +4,7 @@ var eNet = require("../index.js");
 
 function usage()
 {
-    console.log("Usage: node sample-channel.js host channel on|off");
+    console.log("Usage: node sample-channel.js host channel on|off long-click");
     console.log("   - host: ip or dns name of eNet Gateway");
     console.log("");
     console.log("Example: node sample-channel.js 1.1.1.1 16 on");
@@ -16,6 +16,7 @@ var gw = eNet.gateway({host: process.argv[2]});
 var channel = parseInt(process.argv[3]);
 if (channel === NaN) return usage();
 var on = process.argv[4] === "on" ? true : false;
+var longClick = (process.argv.length >= 6) && (process.argv[5] === "long-click");
 
 console.log("Connecting to " + gw.name + " ...");
 gw.connect();
@@ -31,9 +32,9 @@ gw.signIn([channel], function(err, res) {
     else console.log("sign in succeeded: \n" + JSON.stringify(res));
 });
 
-console.log("Sending on/up long-click command to channel " + channel + ".");
+console.log("Sending on/up " + longClick ? "long-click" : "" + " command to channel " + channel + ".");
 
-gw.setValue(channel, on, true, function(err, res) {
+gw.setValue(channel, on, longClick, function(err, res) {
     if (err) console.log("error: " + err);
     else console.log("Channel command succeeded: \n" + JSON.stringify(res));
 })
