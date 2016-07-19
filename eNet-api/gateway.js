@@ -12,7 +12,7 @@ function gateway(config) {
     this.idleTimeout = 3000;
     this.host = config.host;
     this.name = config.name || config.host;
-    this.id = config.host || config.mac || config.name;
+    this.id = config.mac || config.name;
 
     this.client = new net.Socket();
     this.connected = false;
@@ -260,8 +260,8 @@ gateway.prototype.setValue = function(channel, on, long, callback){
 
     if (!this.connected) this.connect();
 
-//    var msg = `{"CMD":"ITEM_VALUE_SET","PROTOCOL":"0.03","TIMESTAMP":"${Math.floor(Date.now()/1000)}","VALUES":[{"STATE":"${on ? "ON":"OFF"}"${long ? ",\"LONG_CLICK\":\"ON\"" : ""},"NUMBER":${channel}}]}\r\n\r\n`;
-    var msg = `{"CMD":"ITEM_VALUE_SET","PROTOCOL":"0.03","TIMESTAMP":"${Math.floor(Date.now()/1000)}","VALUES":[{"STATE":"${on ? "ON":"OFF"}","LONG_CLICK":"${long ? "ON":"OFF"}","NUMBER":${channel}}]}\r\n\r\n`;
+    var msg = `{"CMD":"ITEM_VALUE_SET","PROTOCOL":"0.03","TIMESTAMP":"${Math.floor(Date.now()/1000)}","VALUES":[{"STATE":"${on ? "ON":"OFF"}"${long ? ",\"LONG_CLICK\":\"ON\"" : ""},"NUMBER":${channel}}]}\r\n\r\n`;
+//    var msg = `{"CMD":"ITEM_VALUE_SET","PROTOCOL":"0.03","TIMESTAMP":"${Math.floor(Date.now()/1000)}","VALUES":[{"STATE":"${on ? "ON":"OFF"}","LONG_CLICK":"${long ? "ON":"OFF"}","NUMBER":${channel}}]}\r\n\r\n`;
 
 console.log(msg);
     this.client.write(msg);

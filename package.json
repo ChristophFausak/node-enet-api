@@ -1,6 +1,6 @@
 {
   "name": "node-enet-api",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Node.js api to interact with Gira/Jung eNet devices.",
   "license": "MIT",
   "directories": {

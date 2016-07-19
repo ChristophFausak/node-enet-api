@@ -4,19 +4,19 @@ var eNet = require("../index.js");
 
 function usage()
 {
-    console.log("Usage: node sample-channel.js host channel on|off long-click");
+    console.log("Usage: node sample-channel.js host channel on|off longclick");
     console.log("   - host: ip or dns name of eNet Gateway");
     console.log("");
     console.log("Example: node sample-channel.js 1.1.1.1 16 on");
 }
 
-if (process.argv.length != 5) return usage();
+if (process.argv.length < 5) return usage();
 
 var gw = eNet.gateway({host: process.argv[2]});
 var channel = parseInt(process.argv[3]);
 if (channel === NaN) return usage();
 var on = process.argv[4] === "on" ? true : false;
-var longClick = (process.argv.length >= 6) && (process.argv[5] === "long-click");
+var longClick = (process.argv.length >= 6) && (process.argv[5] === "longclick");
 
 console.log("Connecting to " + gw.name + " ...");
 gw.connect();
