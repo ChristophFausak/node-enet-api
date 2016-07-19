@@ -18,12 +18,6 @@ function gateway(config) {
     this.connected = false;
     this.data = '';
 
-    this.client.on('connect', function() {
-        this.client.setTimeout(this.idleTimeout, function() {
-            this.disconnect();
-        }.bind(this))
-    }.bind(this));
-
     this.client.on('close', function() {
         this.connected = false;
         this.emit('gateway', null, null);
@@ -79,7 +73,11 @@ gateway.prototype.connect = function() {
 
 //    this.client.setTimeout(0);
 
-    this.client.connect(CONNECTION_PORT, this.host, );
+    this.client.connect(CONNECTION_PORT, this.host, function() {
+            this.client.setTimeout(this.idleTimeout, function() {
+                this.disconnect();
+            }.bind(this))
+        }.bind(this));
 }
 
 gateway.prototype.disconnect = function() {
