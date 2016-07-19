@@ -9,13 +9,20 @@ const EventEmitter = require('events');
 function gateway(config) {
     if (!config.host) throw(new Error('Gateway definition has no host'));
 
+    this.idleTimeout = 3000;
     this.host = config.host;
     this.name = config.name || config.host;
-    this.id = config.id || config.mac || config.name;
+    this.id = config.host || config.mac || config.name;
 
     this.client = new net.Socket();
     this.connected = false;
     this.data = '';
+
+    this.client.on('connect', function() {
+        this.client.setTimeout(this.idleTimeout, function() {
+            this.disconnect();
+        }.bind(this))
+    }.bind(this));
 
     this.client.on('close', function() {
         this.connected = false;
@@ -70,7 +77,9 @@ gateway.prototype.connect = function() {
     if (this.connected) return;
     this.connected = true;
 
-    this.client.connect(CONNECTION_PORT, this.host);
+//    this.client.setTimeout(0);
+
+    this.client.connect(CONNECTION_PORT, this.host, );
 }
 
 gateway.prototype.disconnect = function() {
