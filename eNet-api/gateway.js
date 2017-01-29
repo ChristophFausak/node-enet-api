@@ -252,16 +252,50 @@ gateway.prototype.signIn = function(channels, callback){
 }
 
 
+gateway.prototype.signIn = function(channels, callback){
+    var l;
+
+    if (!Array.isArray(channels))
+    {
+        if (callback) callback(new Error('signIn needs a channels array.'));
+        return;
+    }
+
+    if (callback) l = new responseListener(this, "ITEM_VALUE_SIGN_IN_RES", callback);
+
+    if (!this.connected) this.connect();
+
+    var msg = `{"ITEMS":${JSON.stringify(channels)},"CMD":"ITEM_VALUE_SIGN_IN_REQ","PROTOCOL":"0.03","TIMESTAMP":"${Math.floor(Date.now()/1000)}"}\r\n\r\n`;
+    this.client.write(msg);
+
+// response: {"PROTOCOL":"0.03","TIMESTAMP":"08154711","CMD":"ITEM_VALUE_SIGN_IN_RES","ITEMS":[16]}
+}
+
+
 gateway.prototype.setValue = function(channel, on, long, callback){
     var l;
 
-//    if (callback) l = new channelResponseListener(this, channel, "ITEM_VALUE_RES", callback);
     if (callback) l = new channelResponseListener(this, channel, "ITEM_VALUE_RES", callback);
 
     if (!this.connected) this.connect();
 
     var msg = `{"CMD":"ITEM_VALUE_SET","PROTOCOL":"0.03","TIMESTAMP":"${Math.floor(Date.now()/1000)}","VALUES":[{"STATE":"${on ? "ON":"OFF"}"${long ? ",\"LONG_CLICK\":\"ON\"" : ""},"NUMBER":${channel}}]}\r\n\r\n`;
 //    var msg = `{"CMD":"ITEM_VALUE_SET","PROTOCOL":"0.03","TIMESTAMP":"${Math.floor(Date.now()/1000)}","VALUES":[{"STATE":"${on ? "ON":"OFF"}","LONG_CLICK":"${long ? "ON":"OFF"}","NUMBER":${channel}}]}\r\n\r\n`;
+
+console.log(msg);
+    this.client.write(msg);
+
+// response: {"CMD":"ITEM_VALUE_RES","PROTOCOL":"0.03","TIMESTAMP":"1467998383","VALUES":[{"NUMBER":16,"STATE":"OFF"}]}
+}
+
+gateway.prototype.setValueDim = function(channel, dimVal, callback){
+    var l;
+
+    if (callback) l = new channelResponseListener(this, channel, "ITEM_VALUE_RES", callback);
+
+    if (!this.connected) this.connect();
+
+    var msg = `{"CMD":"ITEM_VALUE_SET","PROTOCOL":"0.03","TIMESTAMP":"${Math.floor(Date.now()/1000)}","VALUES":[{"STATE":"VALUE_DIMM","VALUE":${dimVal},"NUMBER":${channel}}]}\r\n\r\n`;
 
 console.log(msg);
     this.client.write(msg);
@@ -283,7 +317,6 @@ function responseListener(gateway, response, callback) {
                 callback(new Error("Gateway disconnected."));
                 return;
             }
-//console.log("response: " + JSON.stringify(msg));
 
             if (msg.CMD === response){
                 gateway.removeListener('gateway', cb);
@@ -296,23 +329,26 @@ function responseListener(gateway, response, callback) {
 }
 
 function channelResponseListener(gateway, channel, response, callback) {
-    var cb = function(err, msg) {
+    this.gateway = gateway;
+    this.listening = true;
+
+    this.cb = function(err, msg) {
         if (err)
         {
-            gateway.removeListener('gateway', cb);
+            gateway.removeListener('gateway', this.cb);
             callback(err);
         }
         else {
             if (!msg) {
-                gateway.removeListener('gateway', cb);
+                gateway.removeListener('gateway', this.cb);
                 callback(new Error("Gateway disconnected."));
                 return;
             }
-
+console.log("cRL: " + msg);
             if ((msg.CMD === response) && Array.isArray(msg.VALUES)) {
                 msg.VALUES.forEach(function(obj) {
                     if (obj.NUMBER === channel.toString()){
-                        gateway.removeListener('gateway', cb);
+                        gateway.removeListener('gateway', this.cb);
                         callback(null, obj);
                     }
                 });
@@ -320,5 +356,5 @@ function channelResponseListener(gateway, channel, response, callback) {
         }
     };
 
-    gateway.on('gateway', cb);
+    gateway.on('gateway', this.cb);
 }
