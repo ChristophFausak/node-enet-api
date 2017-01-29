@@ -282,7 +282,6 @@ gateway.prototype.setValue = function(channel, on, long, callback){
     var msg = `{"CMD":"ITEM_VALUE_SET","PROTOCOL":"0.03","TIMESTAMP":"${Math.floor(Date.now()/1000)}","VALUES":[{"STATE":"${on ? "ON":"OFF"}"${long ? ",\"LONG_CLICK\":\"ON\"" : ""},"NUMBER":${channel}}]}\r\n\r\n`;
 //    var msg = `{"CMD":"ITEM_VALUE_SET","PROTOCOL":"0.03","TIMESTAMP":"${Math.floor(Date.now()/1000)}","VALUES":[{"STATE":"${on ? "ON":"OFF"}","LONG_CLICK":"${long ? "ON":"OFF"}","NUMBER":${channel}}]}\r\n\r\n`;
 
-console.log(msg);
     this.client.write(msg);
 
 // response: {"CMD":"ITEM_VALUE_RES","PROTOCOL":"0.03","TIMESTAMP":"1467998383","VALUES":[{"NUMBER":16,"STATE":"OFF"}]}
@@ -297,35 +296,45 @@ gateway.prototype.setValueDim = function(channel, dimVal, callback){
 
     var msg = `{"CMD":"ITEM_VALUE_SET","PROTOCOL":"0.03","TIMESTAMP":"${Math.floor(Date.now()/1000)}","VALUES":[{"STATE":"VALUE_DIMM","VALUE":${dimVal},"NUMBER":${channel}}]}\r\n\r\n`;
 
-console.log(msg);
     this.client.write(msg);
+}
 
-// response: {"CMD":"ITEM_VALUE_RES","PROTOCOL":"0.03","TIMESTAMP":"1467998383","VALUES":[{"NUMBER":16,"STATE":"OFF"}]}
+gateway.prototype.setValueBlind = function(channel, blindVal, callback){
+    var l;
+
+    if (callback) l = new channelResponseListener(this, channel, "ITEM_VALUE_RES", callback);
+
+    if (!this.connected) this.connect();
+
+    var msg = `{"CMD":"ITEM_VALUE_SET","PROTOCOL":"0.03","TIMESTAMP":"${Math.floor(Date.now()/1000)}","VALUES":[{"STATE":"VALUE_BLINDS","VALUE":${blindVal},"NUMBER":${channel}}]}\r\n\r\n`;
+
+    this.client.write(msg);
 }
 
 
 function responseListener(gateway, response, callback) {
-    var cb = function(err, msg) {
+    this.gateway = gateway;
+    this.cb = function(err, msg) {
         if (err)
         {
-            gateway.removeListener('gateway', cb);
+            gateway.removeListener('gateway', this.cb);
             callback(err);
         }
         else {
             if (!msg) {
-                gateway.removeListener('gateway', cb);
+                gateway.removeListener('gateway', this.cb);
                 callback(new Error("Gateway disconnected."));
                 return;
             }
 
             if (msg.CMD === response){
-                gateway.removeListener('gateway', cb);
+                gateway.removeListener('gateway', this.cb);
                 callback(null, msg);
             }
         }
     };
 
-    gateway.on('gateway', cb);
+    gateway.on('gateway', this.cb.bind(this));
 }
 
 function channelResponseListener(gateway, channel, response, callback) {
@@ -344,17 +353,16 @@ function channelResponseListener(gateway, channel, response, callback) {
                 callback(new Error("Gateway disconnected."));
                 return;
             }
-console.log("cRL: " + msg);
             if ((msg.CMD === response) && Array.isArray(msg.VALUES)) {
                 msg.VALUES.forEach(function(obj) {
                     if (obj.NUMBER === channel.toString()){
                         gateway.removeListener('gateway', this.cb);
                         callback(null, obj);
                     }
-                });
+                }.bind(this));
             }
         }
     };
 
-    gateway.on('gateway', this.cb);
+    gateway.on('gateway', this.cb.bind(this));
 }
