@@ -7,8 +7,6 @@ const util = require('util');
 const EventEmitter = require('events');
 
 function gateway(config) {
-    if (!config.host) throw(new Error('Gateway definition has no host'));
-
     this.idleTimeout = 3000;
     this.host = config.host;
     this.name = config.name || config.host;
@@ -69,9 +67,8 @@ module.exports = function (config) {
 
 gateway.prototype.connect = function() {
     if (this.connected) return;
+    if (!this.host) return;
     this.connected = true;
-
-//    this.client.setTimeout(0);
 
     this.client.connect(CONNECTION_PORT, this.host, function() {
             this.client.setTimeout(this.idleTimeout, function() {
@@ -142,70 +139,6 @@ gateway.prototype.getProjectList = function(callback){
 
     var msg = `{"CMD":"PROJECT_LIST_GET","PROTOCOL":"0.03","TIMESTAMP":"${Math.floor(Date.now()/1000)}"}\r\n\r\n`;
     this.client.write(msg);
-
-/* response:
-{
-	"PROTOCOL":	"0.03",
-	"TIMESTAMP":	"08154711",
-	"CMD":	"PROJECT_LIST_RES",
-	"PROJECT_ID":	"36",
-	"FIRMWARE":	"0.91",
-	"LISTS": [
-        {
-        	"NUMBER":	0,
-        	"NAME":	"",
-        	"ICON":	259,
-        	"VISIBLE":	false
-        },
-         ...
-        {
-        	"NUMBER":	19,
-        	"NAME":	"Raum 20",
-        	"ICON":	0,
-        	"VISIBLE":	false
-        }],
-	"ITEMS":[
-        {
-        	"NUMBER":	0,
-        	"NAME":	"Szene 1",
-        	"TYPE":	"Scene",
-        	"DIMMABLE":	false,
-        	"WRITEABLE":	false,
-        	"READABLE":	false,
-        	"SUFFIX":	"",
-        	"MIN":	"",
-        	"MAX":	"",
-        	"STEP":	""
-        },
-        ...
-        {
-        	"NUMBER":	16,
-        	"NAME":	"Funktion 1",
-        	"TYPE":	"Jalousie",
-        	"DIMMABLE":	false,
-        	"WRITEABLE":	false,
-        	"READABLE":	false,
-        	"SUFFIX":	"0",
-        	"MIN":	"No",
-        	"MAX":	"0",
-        	"STEP":	"0"
-        },
-        ...
-        {
-        	"NUMBER":	42,
-        	"NAME":	"MasterDimmen",
-        	"TYPE":	"Binaer",
-        	"DIMMABLE":	false,
-        	"WRITEABLE":	false,
-        	"READABLE":	false,
-        	"SUFFIX":	"",
-        	"MIN":	"",
-        	"MAX":	"",
-        	"STEP":	"",
-        	"PROGRAMMABLE":	"false"
-        }
-    ]
-}*/
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -250,27 +183,6 @@ gateway.prototype.signIn = function(channels, callback){
 
 // response: {"PROTOCOL":"0.03","TIMESTAMP":"08154711","CMD":"ITEM_VALUE_SIGN_IN_RES","ITEMS":[16]}
 }
-
-
-gateway.prototype.signIn = function(channels, callback){
-    var l;
-
-    if (!Array.isArray(channels))
-    {
-        if (callback) callback(new Error('signIn needs a channels array.'));
-        return;
-    }
-
-    if (callback) l = new responseListener(this, "ITEM_VALUE_SIGN_IN_RES", callback);
-
-    if (!this.connected) this.connect();
-
-    var msg = `{"ITEMS":${JSON.stringify(channels)},"CMD":"ITEM_VALUE_SIGN_IN_REQ","PROTOCOL":"0.03","TIMESTAMP":"${Math.floor(Date.now()/1000)}"}\r\n\r\n`;
-    this.client.write(msg);
-
-// response: {"PROTOCOL":"0.03","TIMESTAMP":"08154711","CMD":"ITEM_VALUE_SIGN_IN_RES","ITEMS":[16]}
-}
-
 
 gateway.prototype.setValue = function(channel, on, long, callback){
     var l;
