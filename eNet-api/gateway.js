@@ -226,6 +226,7 @@ gateway.prototype.setValueBlind = function(channel, blindVal, callback){
 
 function responseListener(gateway, response, callback) {
     this.gateway = gateway;
+
     this.cb = function(err, msg) {
         if (err)
         {
@@ -244,9 +245,9 @@ function responseListener(gateway, response, callback) {
                 callback(null, msg);
             }
         }
-    };
+    }.bind(this);
 
-    gateway.on('gateway', this.cb.bind(this));
+    gateway.on('gateway', this.cb);
 }
 
 function channelResponseListener(gateway, channel, response, callback) {
@@ -274,7 +275,7 @@ function channelResponseListener(gateway, channel, response, callback) {
                 }.bind(this));
             }
         }
-    };
+    }.bind(this);
 
-    gateway.on('gateway', this.cb.bind(this));
+    gateway.on('gateway', this.cb);
 }
